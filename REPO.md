@@ -4,6 +4,10 @@
 
 ## Structure
 ```
+├── .bob/               
+│   └── skills/             
+│       └── repo-md/            
+│           └── SKILL.md              — agent skill definition
 ├── src/                  — source
 │   ├── commands/             — CLI command implementations
 │   │   ├── agent.ts            
@@ -81,27 +85,20 @@
 <!-- REPO.MD:CONVENTIONS:START -->
 
 ## Conventions
-- **Module system:** ESM (`"type": "module"`) — all imports use `.js` extension even for `.ts` sources
-- **Build output:** `dist/` (compiled by `tsc`); only `dist/` is published to npm
-- **Naming:** `camelCase` functions, `PascalCase` interfaces, `kebab-case` filenames
-- **Command pattern:** each CLI subcommand is a `run<Name>(options)` function in `src/commands/`
-- **No external CLI deps:** argument parsing hand-rolled to keep install footprint minimal
-- **Tests:** Jest with `ts-jest`, co-located in `tests/` (not beside source)
-- **Section markers:** `<!-- REPO.MD:<SECTION>:START/END -->` delimit auto-regenerated blocks
-- **Token budget:** 1 800 tokens soft limit (~7 200 chars); trim STRUCTURE depth before cutting data
 
 <!-- REPO.MD:CONVENTIONS:END -->
 
 <!-- REPO.MD:UPDATED:START -->
 
-**Updated:** 2026-09-26 09:48:03 UTC
-**Git:** `main` @ `d0c2421`
+**Updated:** 2026-09-26 09:54:50 UTC
+**Git:** `main` @ `87f501f`
 
 **Uncommitted changes:**
-- Added: `SKILL.md`, `src/commands/agent.ts`, `src/commands/skill.ts`, `src/commands/stats.ts`, `src/commands/update.ts`, `src/lib/git.ts`
-- Modified: `README.md`, `REPO.md`, `package.json`, `src/cli.ts`, `src/lib/writer.ts`
+- Added: `.bob/`
+- Modified: `REPO.md`, `src/commands/agent.ts`
 
 **Recent commits:**
+- `87f501f` feat: add update/agent/skill/stats commands; marker-structured REPO.md; per-file annotations
 - `d0c2421` docs: rewrite README for repo-md; fix cli.ts as entry point in writer
 - `dde5de6` feat: implement repo-md init command
 - `2dc17fa` Initial commit

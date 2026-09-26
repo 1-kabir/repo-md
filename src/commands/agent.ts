@@ -80,9 +80,9 @@ function buildCommand(agent: AgentName, prompt: string): { cmd: string; args: st
 /** Check if a CLI binary exists in PATH. */
 function hasBinary(name: string): boolean {
   try {
-    execSync(`${process.platform === "win32" ? "where" : "which"} ${name}`, {
-      stdio: "pipe",
-    });
+    // On Windows use `where.exe` explicitly to avoid PowerShell's Where-Object alias
+    const cmd = process.platform === "win32" ? `where.exe ${name}` : `which ${name}`;
+    execSync(cmd, { stdio: "pipe" });
     return true;
   } catch {
     return false;

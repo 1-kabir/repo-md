@@ -1,0 +1,43 @@
+{
+  "name": "repo-md",
+  "version": "0.1.0",
+  "description": "Map your repo for coding agents — one markdown file, zero exploration overhead.",
+  "type": "module",
+  "bin": {
+    "repo-md": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "agents",
+    "ai",
+    "coding-agent",
+    "repo",
+    "index",
+    "claude",
+    "bob"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ignore": "^5.3.2",
+    "minimatch": "^9.0.5"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.14.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4",
+    "typescript": "^5.5.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

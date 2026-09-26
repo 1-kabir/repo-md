@@ -4,10 +4,6 @@
 
 ## Structure
 ```
-├── .bob/               
-│   └── skills/             
-│       └── repo-md/            
-│           └── SKILL.md              — agent skill definition
 ├── src/                  — source
 │   ├── commands/             — CLI command implementations
 │   │   ├── agent.ts            
@@ -85,19 +81,27 @@
 <!-- REPO.MD:CONVENTIONS:START -->
 
 ## Conventions
+- **Module system:** ESM (`"type": "module"`) — all imports use `.js` extension even for `.ts` sources
+- **Build output:** `dist/` (compiled by `tsc`); only `dist/` is published to npm
+- **Naming:** `camelCase` functions, `PascalCase` interfaces, `kebab-case` filenames
+- **Command pattern:** each CLI subcommand is a `run<Name>(options)` function in `src/commands/`
+- **No external runtime deps:** only `ignore` + `minimatch`; argument parsing is hand-rolled
+- **Tests:** Jest with `ts-jest`, co-located in `tests/` (not beside source)
+- **Section markers:** `<!-- REPO.MD:<SECTION>:START/END -->` delimit auto-regenerated blocks
+- **Token budget:** 1 800 tokens soft limit (~7 200 chars); trim STRUCTURE depth before cutting data
 
 <!-- REPO.MD:CONVENTIONS:END -->
 
 <!-- REPO.MD:UPDATED:START -->
 
-**Updated:** 2026-09-26 09:54:50 UTC
-**Git:** `main` @ `87f501f`
+**Updated:** 2026-09-26 10:00:33 UTC
+**Git:** `main` @ `9aaaba0`
 
 **Uncommitted changes:**
-- Added: `.bob/`
-- Modified: `REPO.md`, `src/commands/agent.ts`
+- Modified: `AGENTS.md`, `REPO.md`, `src/cli.ts`, `src/commands/agent.ts`, `src/lib/ignore.ts`
 
 **Recent commits:**
+- `9aaaba0` fix: use where.exe on Windows to avoid PowerShell Where-Object alias in hasBinary
 - `87f501f` feat: add update/agent/skill/stats commands; marker-structured REPO.md; per-file annotations
 - `d0c2421` docs: rewrite README for repo-md; fix cli.ts as entry point in writer
 - `dde5de6` feat: implement repo-md init command

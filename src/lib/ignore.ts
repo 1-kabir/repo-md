@@ -27,6 +27,9 @@ const IGNORE_FILES = [".gitignore", ".bobignore"] as const;
 /** Always-ignored top-level names regardless of ignore files. */
 const ALWAYS_SKIP = new Set([
   ".git",
+  ".bob",
+  ".agents",
+  ".claude",
   "node_modules",
   ".venv",
   "venv",

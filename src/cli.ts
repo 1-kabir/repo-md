@@ -143,7 +143,7 @@ Options (init / update):
   --no-inject            Skip injecting into AGENTS.md / CLAUDE.md
 
 Options (agent):
-  --agent <name>         Agent to use: bob | claude | opencode | codex | antigravity
+  --agent <name>         Agent to use: bob | claude | opencode | codex | agy | antigravity
 
 Options (skill):
   --install              Install SKILL.md into .bob/skills/repo-md/
@@ -158,6 +158,8 @@ Examples:
   npx repo-md update --cwd ./my-project
   npx repo-md agent --agent bob
   npx repo-md agent --agent claude
+  npx repo-md agent --agent opencode
+  npx repo-md agent --agent agy
   npx repo-md skill
   npx repo-md skill --install
   npx repo-md skill | claude -p "enrich this"
@@ -200,7 +202,7 @@ async function main(): Promise<void> {
         break;
 
       case "agent": {
-        const validAgents: AgentName[] = ["bob", "claude", "opencode", "codex", "antigravity"];
+        const validAgents: AgentName[] = ["bob", "claude", "opencode", "codex", "agy", "antigravity"];
         if (!args.agent || !validAgents.includes(args.agent as AgentName)) {
           console.error(`❌ --agent is required. Valid values: ${validAgents.join(" | ")}`);
           process.exit(1);

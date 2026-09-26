@@ -6,18 +6,19 @@
  * any insight the model can derive from the code.
  *
  * Supported agents:
- *   bob       — IBM Bob Shell  (bob shell -p "<prompt>")
- *   claude    — Anthropic CLI  (claude -p "<prompt>")
- *   opencode  — OpenCode CLI   (opencode -p "<prompt>")
- *   codex     — OpenAI Codex   (codex exec "<prompt>")
- *   antigravity — any $ANTIGRAVITY_CMD env var
+ *   bob         — IBM Bob Shell    (bob shell -p "<prompt>")
+ *   claude      — Anthropic CLI    (claude -p "<prompt>")
+ *   opencode    — OpenCode CLI     (opencode run "<prompt>")
+ *   codex       — OpenAI Codex     (codex exec "<prompt>")
+ *   agy         — Antigravity CLI  (agy --print "<prompt>")
+ *   antigravity — custom binary    ($ANTIGRAVITY_CMD env var)
  */
 
 import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
 import { runInit } from "./init.js";
 
-export type AgentName = "bob" | "claude" | "opencode" | "codex" | "antigravity";
+export type AgentName = "bob" | "claude" | "opencode" | "codex" | "agy" | "antigravity";
 
 export interface AgentOptions {
   agent: AgentName;
@@ -60,9 +61,13 @@ function buildCommand(agent: AgentName, prompt: string): { cmd: string; args: st
     case "claude":
       return { cmd: "claude", args: ["-p", prompt] };
     case "opencode":
-      return { cmd: "opencode", args: ["-p", prompt] };
+      // opencode headless mode: `opencode run "<message>"`
+      return { cmd: "opencode", args: ["run", prompt] };
     case "codex":
       return { cmd: "codex", args: ["exec", prompt] };
+    case "agy":
+      // Antigravity (agy) headless: `agy --print "<prompt>"`
+      return { cmd: "agy", args: ["--print", prompt] };
     case "antigravity": {
       const custom = process.env["ANTIGRAVITY_CMD"];
       if (!custom) {
@@ -128,16 +133,19 @@ export async function runAgent(options: AgentOptions): Promise<AgentResult> {
   if (!quiet) console.log(`🤖 Calling ${agent} for enrichment pass …`);
 
   // Step 3: spawn the agent headlessly in the repo root
+  // Always inherit stdout so agent output is visible; pipe stderr only in
+  // quiet mode but still surface it on failure.
   const result = spawnSync(cmdSpec.cmd, cmdSpec.args, {
     cwd: root,
-    stdio: quiet ? "pipe" : "inherit",
+    stdio: quiet ? ["pipe", "pipe", "pipe"] : "inherit",
     encoding: "utf8",
   });
 
   const exitCode = result.status ?? 1;
 
-  if (exitCode !== 0 && !quiet) {
-    console.error(`⚠️  Agent exited with code ${exitCode}`);
+  if (exitCode !== 0) {
+    if (!quiet) console.error(`⚠️  Agent exited with code ${exitCode}`);
+    // Always print captured stderr on failure, even in quiet mode
     if (result.stderr) console.error(result.stderr);
   } else if (!quiet) {
     console.log(`✅ Enrichment complete`);

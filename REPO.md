@@ -56,5 +56,6 @@
 | `tests/fixtures/simple-app/frontend` | TypeScript+Vite |
 
 ## Entry Points
+- `src/cli.ts`
 - `tests/fixtures/simple-app/api/index.ts`
 - `tests/fixtures/simple-app/src/main.ts`

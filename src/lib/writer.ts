@@ -48,6 +48,7 @@ const ENTRY_POINT_NAMES = new Set([
   "main.ts", "main.js", "main.py", "main.go", "main.rs",
   "app.ts", "app.js", "app.py",
   "server.ts", "server.js",
+  "cli.ts", "cli.js",
   "cmd/main.go",
 ]);
 

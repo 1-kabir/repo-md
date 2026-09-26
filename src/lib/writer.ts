@@ -39,6 +39,14 @@ export interface WriterOptions {
   tokenBudget?: number;
 }
 
+/** Per-section bodies returned by buildSections(), used by the update command. */
+export interface SectionBodies {
+  structure: string;
+  stack: string;
+  entryPoints: string;
+  conventions: string;
+}
+
 const CHARS_PER_TOKEN = 4;
 const DEFAULT_BUDGET = 1800;
 
@@ -52,11 +60,12 @@ const ENTRY_POINT_NAMES = new Set([
   "cmd/main.go",
 ]);
 
-/** Purpose tags derived from common dir/file names */
+/** Purpose tags derived from common dir names */
 const PURPOSE_TAGS: Record<string, string> = {
   "src": "source",
-  "lib": "library utilities",
+  "lib": "shared utilities",
   "api": "API layer",
+  "commands": "CLI command implementations",
   "routes": "route handlers",
   "controllers": "request handlers",
   "middleware": "middleware",
@@ -100,6 +109,85 @@ const PURPOSE_TAGS: Record<string, string> = {
   ".github": "CI/CD workflows",
 };
 
+/** Annotation tags for well-known individual files */
+const FILE_TAGS: Record<string, string> = {
+  // CLI / entry points
+  "cli.ts": "CLI entry point",
+  "cli.js": "CLI entry point",
+  "index.ts": "entry point",
+  "index.js": "entry point",
+  "index.mjs": "entry point",
+  "main.ts": "entry point",
+  "main.js": "entry point",
+  "main.go": "entry point",
+  "main.py": "entry point",
+  "main.rs": "entry point",
+  "server.ts": "server entry",
+  "server.js": "server entry",
+  "app.ts": "app entry",
+  "app.js": "app entry",
+  // Config / meta
+  "package.json": "npm manifest + deps",
+  "tsconfig.json": "TypeScript config",
+  "tsconfig.base.json": "base TypeScript config",
+  "jest.config.js": "Jest config",
+  "jest.config.ts": "Jest config",
+  "vitest.config.ts": "Vitest config",
+  "vite.config.ts": "Vite config",
+  "vite.config.js": "Vite config",
+  "next.config.ts": "Next.js config",
+  "next.config.js": "Next.js config",
+  "next.config.mjs": "Next.js config",
+  ".eslintrc.js": "ESLint config",
+  ".eslintrc.json": "ESLint config",
+  "eslint.config.js": "ESLint config",
+  "prettier.config.js": "Prettier config",
+  ".prettierrc": "Prettier config",
+  "tailwind.config.ts": "Tailwind config",
+  "tailwind.config.js": "Tailwind config",
+  "Dockerfile": "container build",
+  "docker-compose.yml": "multi-container setup",
+  "docker-compose.yaml": "multi-container setup",
+  // Docs / meta
+  "README.md": "project readme",
+  "AGENTS.md": "agent instructions",
+  "CLAUDE.md": "Claude instructions",
+  "REPO.md": "repo index for agents",
+  "SKILL.md": "agent skill definition",
+  "SECURITY.md": "security policy",
+  "SECURITY.MD": "security policy",
+  // Go / Rust / Python
+  "go.mod": "Go module definition",
+  "Cargo.toml": "Rust manifest",
+  "requirements.txt": "Python dependencies",
+  "pyproject.toml": "Python project config",
+  "manage.py": "Django CLI",
+};
+
+/**
+ * Build raw section bodies without markers — used by both writeRepoMd and
+ * the update command (which handles markers and diffing itself).
+ */
+export function buildSections(opts: Omit<WriterOptions, "repoName">): SectionBodies {
+  _stackCache = new Map();
+  const { root, nodes } = opts;
+
+  const structLines = buildStructureSection(root, nodes);
+  const structure = "\n## Structure\n```\n" + structLines.join("\n") + "\n```\n";
+
+  const stackLines = buildStackSection(root, nodes);
+  const stack = stackLines.length > 0
+    ? "\n## Stack\n" + stackLines.join("\n") + "\n"
+    : "";
+
+  const entryLines = buildEntryPointsSection(nodes);
+  const entryPoints = entryLines.length > 0
+    ? "\n## Entry Points\n" + entryLines.join("\n") + "\n"
+    : "";
+
+  return { structure, stack, entryPoints, conventions: "" };
+}
+
 export function writeRepoMd(opts: WriterOptions): string {
   // Reset per-call cache so two calls on the same or different trees don't bleed
   _stackCache = new Map();
@@ -112,30 +200,43 @@ export function writeRepoMd(opts: WriterOptions): string {
   } = opts;
   const charBudget = tokenBudget * CHARS_PER_TOKEN;
 
-  const sections: string[] = [];
+  const parts: string[] = [];
 
   // ── Header ─────────────────────────────────────────────────────────────────
-  const header = `# REPO.md — ${repoName}\n`;
-  sections.push(header);
+  parts.push(`# REPO.md — ${repoName}`);
 
   // ── Structure section ──────────────────────────────────────────────────────
   const structLines = buildStructureSection(root, nodes);
-  sections.push("## Structure\n```\n" + structLines.join("\n") + "\n```\n");
+  const structBody = "## Structure\n```\n" + structLines.join("\n") + "\n```";
+  parts.push(
+    "<!-- REPO.MD:STRUCTURE:START -->\n\n" + structBody + "\n\n<!-- REPO.MD:STRUCTURE:END -->"
+  );
 
   // ── Stack section ──────────────────────────────────────────────────────────
   const stackLines = buildStackSection(root, nodes);
   if (stackLines.length > 0) {
-    sections.push("## Stack\n" + stackLines.join("\n") + "\n");
+    const stackBody = "## Stack\n" + stackLines.join("\n");
+    parts.push(
+      "<!-- REPO.MD:STACK:START -->\n\n" + stackBody + "\n\n<!-- REPO.MD:STACK:END -->"
+    );
   }
 
   // ── Entry Points section ───────────────────────────────────────────────────
   const entryLines = buildEntryPointsSection(nodes);
   if (entryLines.length > 0) {
-    sections.push("## Entry Points\n" + entryLines.join("\n") + "\n");
+    const epBody = "## Entry Points\n" + entryLines.join("\n");
+    parts.push(
+      "<!-- REPO.MD:ENTRYPOINTS:START -->\n\n" + epBody + "\n\n<!-- REPO.MD:ENTRYPOINTS:END -->"
+    );
   }
 
+  // ── Conventions section (scaffold — enriched by `repo-md agent` or by hand) ─
+  parts.push(
+    "<!-- REPO.MD:CONVENTIONS:START -->\n\n## Conventions\n\n<!-- REPO.MD:CONVENTIONS:END -->"
+  );
+
   // ── Assemble + enforce budget ──────────────────────────────────────────────
-  let output = sections.join("\n");
+  let output = parts.join("\n\n") + "\n";
 
   if (output.length > charBudget) {
     output = trimToBudget(output, charBudget);
@@ -181,6 +282,9 @@ function renderNodes(
       if (purpose && !tags.some((t) => t.toLowerCase().includes(purpose.split(" ")[0].toLowerCase()))) {
         tags.push(purpose);
       }
+    } else {
+      const fileTag = FILE_TAGS[name];
+      if (fileTag) tags.push(fileTag);
     }
 
     const tagStr = tags.length > 0 ? `  — ${tags.join(", ")}` : "";

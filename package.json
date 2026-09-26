@@ -7,7 +7,8 @@
     "repo-md": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "SKILL.md"
   ],
   "scripts": {
     "build": "tsc",

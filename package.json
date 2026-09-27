@@ -1,5 +1,5 @@
 {
-  "name": "repo-md",
+  "name": "@1-kabir/repo-md",
   "version": "0.1.0",
   "description": "Map your repo for coding agents — one markdown file, zero exploration overhead.",
   "type": "module",
@@ -10,6 +10,17 @@
     "dist",
     "SKILL.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1-kabir/repo-md.git"
+  },
+  "bugs": {
+    "url": "https://github.com/1-kabir/repo-md/issues"
+  },
+  "homepage": "https://github.com/1-kabir/repo-md#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

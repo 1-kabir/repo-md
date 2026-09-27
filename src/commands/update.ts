@@ -19,6 +19,7 @@ import path from "node:path";
 import { buildIgnoreManager } from "../lib/ignore.js";
 import { walkTree } from "../lib/walker.js";
 import { buildSections } from "../lib/writer.js";
+import { TOOL_OWNED_FILES } from "./init.js";
 import { isGitRepo, gitStatus, recentCommits, headHash, currentBranch } from "../lib/git.js";
 
 export interface UpdateOptions {
@@ -91,9 +92,9 @@ export async function runUpdate(options: UpdateOptions = {}): Promise<UpdateResu
 
   if (!quiet) console.log(`🔄 Updating ${repoMdPath} …`);
 
-  // ── 1. Analyse repo ──────────────────────────────────────────────────────
+  // ── 1. Analyse repo ──────────────────────────────────────────────────
   const ignoreManager = buildIgnoreManager(root, maxDepth);
-  const nodes = walkTree({ root, ignoreManager, maxDepth, maxEntriesPerDir });
+  const nodes = walkTree({ root, ignoreManager, maxDepth, maxEntriesPerDir, excludeTopLevel: TOOL_OWNED_FILES });
 
   // ── 2. Build fresh section bodies ────────────────────────────────────────
   const fresh = buildSections({ root, nodes, tokenBudget });

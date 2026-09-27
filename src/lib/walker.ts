@@ -23,6 +23,12 @@ export interface WalkOptions {
   maxDepth?: number;
   /** Max file entries per directory before truncation. Default: 40 */
   maxEntriesPerDir?: number;
+  /**
+   * Root-level entry names to exclude (tool-owned outputs such as REPO.md,
+   * AGENTS.md, CLAUDE.md). Excluding them keeps `init` deterministic across
+   * back-to-back runs — the tool never indexes files it generates/injects.
+   */
+  excludeTopLevel?: readonly string[];
 }
 
 /**
@@ -35,9 +41,10 @@ export function walkTree(opts: WalkOptions): FileNode[] {
     ignoreManager,
     maxDepth = 6,
     maxEntriesPerDir = 40,
+    excludeTopLevel = [],
   } = opts;
 
-  return _walk(root, root, 0, maxDepth, maxEntriesPerDir, ignoreManager);
+  return _walk(root, root, 0, maxDepth, maxEntriesPerDir, ignoreManager, new Set(excludeTopLevel));
 }
 
 function _walk(
@@ -46,7 +53,8 @@ function _walk(
   depth: number,
   maxDepth: number,
   maxEntriesPerDir: number,
-  ig: IgnoreManager
+  ig: IgnoreManager,
+  excludeTopLevel: Set<string>
 ): FileNode[] {
   if (depth > maxDepth) return [];
 
@@ -73,6 +81,8 @@ function _walk(
     const relPath = path.relative(root, absPath).replace(/\\/g, "/");
     const isDir = entry.isDirectory();
 
+    if (depth === 0 && excludeTopLevel.has(entry.name)) continue;
+
     if (ig.shouldIgnore(relPath, isDir)) continue;
 
     if (!isDir) {
@@ -93,7 +103,7 @@ function _walk(
     const node: FileNode = { relPath, isDir, depth };
 
     if (isDir) {
-      node.children = _walk(root, absPath, depth + 1, maxDepth, maxEntriesPerDir, ig);
+      node.children = _walk(root, absPath, depth + 1, maxDepth, maxEntriesPerDir, ig, excludeTopLevel);
     }
 
     result.push(node);

@@ -3,11 +3,11 @@
  * repo-md CLI entry point
  *
  * Usage:
- *   npx repo-md init     [options]   Walk repo, write REPO.md, inject pointers
- *   npx repo-md update   [options]   Re-index; rewrite only changed sections
- *   npx repo-md agent    --agent <name> [options]  AI enrichment pass
- *   npx repo-md skill    [--install] Print or install SKILL.md
- *   npx repo-md stats    [--json]    Token cost report
+ *   npx @1-kabir/repo-md init     [options]   Walk repo, write REPO.md, inject pointers
+ *   npx @1-kabir/repo-md update   [options]   Re-index; rewrite only changed sections
+ *   npx @1-kabir/repo-md agent    --agent <name> [options]  AI enrichment pass
+ *   npx @1-kabir/repo-md skill    [--install] Print or install SKILL.md
+ *   npx @1-kabir/repo-md stats    [--json]    Token cost report
  */
 
 import { runInit } from "./commands/init.js";
@@ -121,7 +121,7 @@ function printHelp(): void {
 repo-md — map your repo for coding agents
 
 Usage:
-  npx repo-md <command> [options]
+  npx @1-kabir/repo-md <command> [options]
 
 Commands:
   init              Walk repo, write REPO.md, inject into AGENTS.md + CLAUDE.md
@@ -153,18 +153,18 @@ Options (stats):
   --json                 Output as JSON
 
 Examples:
-  npx repo-md init
-  npx repo-md update
-  npx repo-md update --cwd ./my-project
-  npx repo-md agent --agent bob
-  npx repo-md agent --agent claude
-  npx repo-md agent --agent opencode
-  npx repo-md agent --agent agy
-  npx repo-md skill
-  npx repo-md skill --install
-  npx repo-md skill | claude -p "enrich this"
-  npx repo-md stats
-  npx repo-md stats --json
+  npx @1-kabir/repo-md init
+  npx @1-kabir/repo-md update
+  npx @1-kabir/repo-md update --cwd ./my-project
+  npx @1-kabir/repo-md agent --agent bob
+  npx @1-kabir/repo-md agent --agent claude
+  npx @1-kabir/repo-md agent --agent opencode
+  npx @1-kabir/repo-md agent --agent agy
+  npx @1-kabir/repo-md skill
+  npx @1-kabir/repo-md skill --install
+  npx @1-kabir/repo-md skill | claude -p "enrich this"
+  npx @1-kabir/repo-md stats
+  npx @1-kabir/repo-md stats --json
 `.trim());
 }
 

@@ -2,11 +2,11 @@
  * repo-md skill
  *
  * Prints the SKILL.md content to stdout for one-off pipe usage:
- *   npx repo-md skill | <agent>
+ *   npx @1-kabir/repo-md skill | <agent>
  *
  * Optional install via:
- *   npx repo-md skill --install         (copy to .bob/skills/repo-md/SKILL.md)
- *   npx repo-md skill --no-install      (explicit stdout only, default)
+ *   npx @1-kabir/repo-md skill --install         (copy to .bob/skills/repo-md/SKILL.md)
+ *   npx @1-kabir/repo-md skill --no-install      (explicit stdout only, default)
  */
 
 import fs from "node:fs";

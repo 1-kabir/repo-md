@@ -19,7 +19,7 @@ budget. Preserve all hand-enriched content outside the regeneration markers.
 ## Step 1 — Orient
 
 1. Call `read_file` on `REPO.md` to load current content.
-2. If `REPO.md` does not exist, tell the user to run `npx repo-md init` first,
+2. If `REPO.md` does not exist, tell the user to run `npx @1-kabir/repo-md init` first,
    then stop.
 3. Note which marker-delimited sections exist:
    - `<!-- REPO.MD:STRUCTURE:START -->` … `<!-- REPO.MD:STRUCTURE:END -->`

@@ -15,6 +15,7 @@ import { buildIgnoreManager } from "../lib/ignore.js";
 import { walkTree } from "../lib/walker.js";
 import { writeRepoMd } from "../lib/writer.js";
 import { injectPointers } from "../lib/injector.js";
+import { isGitRepo, headHash, currentBranch } from "../lib/git.js";
 
 export interface InitOptions {
   /** Repository root. Defaults to cwd. */
@@ -38,6 +39,13 @@ export interface InitResult {
   tokenCount: number;
 }
 
+/**
+ * Root-level files that repo-md itself writes or injects into. They are
+ * excluded from the structural index so that running `init` twice in a row
+ * produces byte-identical output (the tool never indexes its own outputs).
+ */
+export const TOOL_OWNED_FILES = ["REPO.md", "AGENTS.md", "CLAUDE.md"] as const;
+
 export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   const {
     cwd = process.cwd(),
@@ -55,12 +63,13 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   // 1. Build ignore manager
   const ignoreManager = buildIgnoreManager(root, maxDepth);
 
-  // 2. Walk file tree
+  // 2. Walk file tree (excluding tool-owned outputs so back-to-back runs are deterministic)
   const nodes = walkTree({
     root,
     ignoreManager,
     maxDepth,
     maxEntriesPerDir,
+    excludeTopLevel: TOOL_OWNED_FILES,
   });
 
   // 3. Detect repo name from package.json / go.mod / Cargo.toml or dirname
@@ -75,7 +84,7 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   });
 
   const repoMdPath = path.join(root, "REPO.md");
-  fs.writeFileSync(repoMdPath, content, "utf8");
+  fs.writeFileSync(repoMdPath, content + buildLeanUpdatedSection(root), "utf8");
 
   const tokenCount = Math.ceil(content.length / 4);
   if (!quiet) {
@@ -92,6 +101,31 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   }
 
   return { repoMdPath, injectedFiles, tokenCount };
+}
+
+/**
+ * Lean UPDATED section written by `init`.
+ *
+ * Uses day-level granularity + git HEAD only — deliberately excludes clock
+ * time and the uncommitted-changes list (both volatile and self-referential:
+ * init itself creates REPO.md) so that back-to-back init runs remain
+ * byte-identical. `update` writes the richer UPDATED body with full
+ * timestamp, git status, and recent commits.
+ */
+function buildLeanUpdatedSection(root: string): string {
+  const inGit = isGitRepo(root);
+  const head = inGit ? headHash(root) : null;
+  const branch = inGit ? currentBranch(root) : null;
+  const today = new Date().toISOString().slice(0, 10) + " (UTC)";
+
+  const body = [
+    `**Updated:** ${today}`,
+    head ? `**Git:** \`${branch}\` @ \`${head}\`` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return `\n<!-- REPO.MD:UPDATED:START -->\n\n${body}\n\n<!-- REPO.MD:UPDATED:END -->\n`;
 }
 
 function detectRepoName(root: string): string {

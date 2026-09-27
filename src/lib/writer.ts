@@ -269,9 +269,8 @@ function renderNodes(
     const name = path.basename(node.relPath);
     let label = name + (node.isDir ? "/" : "");
 
-    // Padding for tag alignment
+    // Padding for tag alignment (only when there are tags, to avoid trailing spaces)
     const PAD = 20;
-    const padded = label.padEnd(PAD);
 
     // Tags
     const tags: string[] = [];
@@ -288,6 +287,7 @@ function renderNodes(
     }
 
     const tagStr = tags.length > 0 ? `  — ${tags.join(", ")}` : "";
+    const padded = tags.length > 0 ? label.padEnd(PAD) : label;
     lines.push(prefix + connector + padded + tagStr);
 
     if (node.isDir && node.children && node.children.length > 0) {

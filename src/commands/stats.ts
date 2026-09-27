@@ -48,8 +48,8 @@ export interface StatsResult {
 
 const CHARS_PER_TOKEN = 4;
 const DEFAULT_BUDGET = 1800;
-// Pointer injected into AGENTS.md / CLAUDE.md
-const POINTER_TEXT = `> 📁 This repo is indexed in [REPO.md](./REPO.md).\n> Read it before exploring the file tree — it maps structure, stacks, and entry points.`;
+// Pointer injected into AGENTS.md / CLAUDE.md — keep in sync with injector.ts
+const POINTER_TEXT = `> 📁 **MANDATORY — READ [REPO.md](./REPO.md) FIRST.** Before exploring this repository in any way (listing directories, globbing, grepping, or reading files), you MUST first make a tool call to read REPO.md. It maps the full structure, per-folder stacks, and entry points in a few hundred tokens — one read replaces exploratory tool calls and speeds up every task in this repo.`;
 const POINTER_TOKENS = Math.ceil(POINTER_TEXT.length / CHARS_PER_TOKEN);
 
 // Heuristic: without REPO.md an agent typically runs 4-8 read_file + list_dir
@@ -99,7 +99,7 @@ export async function runStats(options: StatsOptions = {}): Promise<StatsResult>
     console.log(line);
     if (!exists) {
       console.log(`⚠️  REPO.md not found at ${repoMdPath}`);
-      console.log(`   Run: npx repo-md init`);
+      console.log(`   Run: npx @1-kabir/repo-md init`);
       console.log(line);
       return result;
     }

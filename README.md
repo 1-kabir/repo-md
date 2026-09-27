@@ -12,13 +12,13 @@ Coding agents arrive at your repository blind. `AGENTS.md` and `CLAUDE.md` tell 
 
 ```bash
 # Index your repo — writes REPO.md and injects a pointer into AGENTS.md + CLAUDE.md
-npx @1-kabir/repo-md init
+npx @i_kabir/repo-md init
 
 # After structural changes, update only what changed
-npx @1-kabir/repo-md update
+npx @i_kabir/repo-md update
 
 # Check how many tokens REPO.md costs per session
-npx @1-kabir/repo-md stats
+npx @i_kabir/repo-md stats
 ```
 
 ---
@@ -30,7 +30,7 @@ npx @1-kabir/repo-md stats
 Walk the repo, detect stacks, write `REPO.md`, and inject a pointer into `AGENTS.md` and `CLAUDE.md`.
 
 ```bash
-npx @1-kabir/repo-md init [options]
+npx @i_kabir/repo-md init [options]
 ```
 
 Respects `.gitignore`, `.bobignore`, and any nested ignore files. Detects per-folder tech stacks from manifest files and dependency lists. Fully idempotent — run any number of times.
@@ -40,7 +40,7 @@ Respects `.gitignore`, `.bobignore`, and any nested ignore files. Detects per-fo
 Re-index the repo and rewrite **only the sections that changed**. Hand-enriched notes outside the marker-delimited sections are preserved exactly.
 
 ```bash
-npx @1-kabir/repo-md update [options]
+npx @i_kabir/repo-md update [options]
 ```
 
 Sections are marker-delimited (`<!-- REPO.MD:STRUCTURE:START -->` … `<!-- REPO.MD:STRUCTURE:END -->`). The `update` command diffs each section independently and only rewrites those that differ. The `UPDATED` section is always refreshed with the current timestamp, branch, HEAD hash, and recent commits.
@@ -50,7 +50,7 @@ Sections are marker-delimited (`<!-- REPO.MD:STRUCTURE:START -->` … `<!-- REPO
 Run `init` first, then fire a **one-shot headless AI enrichment pass** — the agent annotates purpose tags, adds a `CONVENTIONS` section, and enriches the file without touching any source code.
 
 ```bash
-npx @1-kabir/repo-md agent --agent <name> [options]
+npx @i_kabir/repo-md agent --agent <name> [options]
 ```
 
 Supported agents:
@@ -69,10 +69,10 @@ Print the `SKILL.md` to stdout for one-off pipe usage, or install it permanently
 
 ```bash
 # Pipe directly into any agent
-npx @1-kabir/repo-md skill | claude -p "maintain REPO.md"
+npx @i_kabir/repo-md skill | claude -p "maintain REPO.md"
 
 # Install into Bob IDE (activates as /repo-md skill)
-npx @1-kabir/repo-md skill --install
+npx @i_kabir/repo-md skill --install
 ```
 
 The skill guides any compatible agent through a git-aware, section-scoped REPO.md maintenance pass — orient, gather git state, detect structural changes, explore affected dirs, rewrite only changed sections.
@@ -82,8 +82,8 @@ The skill guides any compatible agent through a git-aware, section-scoped REPO.m
 Report the token cost of `REPO.md` and the per-session injection overhead.
 
 ```bash
-npx @1-kabir/repo-md stats
-npx @1-kabir/repo-md stats --json    # machine-readable output
+npx @i_kabir/repo-md stats
+npx @i_kabir/repo-md stats --json    # machine-readable output
 ```
 
 ```

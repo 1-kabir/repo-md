@@ -99,7 +99,7 @@ export async function runStats(options: StatsOptions = {}): Promise<StatsResult>
     console.log(line);
     if (!exists) {
       console.log(`⚠️  REPO.md not found at ${repoMdPath}`);
-      console.log(`   Run: npx @1-kabir/repo-md init`);
+      console.log(`   Run: npx @i_kabir/repo-md init`);
       console.log(line);
       return result;
     }

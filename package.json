@@ -1,6 +1,6 @@
 {
   "name": "@i_kabir/repo-md",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Map your repo for coding agents — one markdown file, zero exploration overhead.",
   "type": "module",
   "bin": {

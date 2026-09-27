@@ -14,11 +14,11 @@ Commands: `init` · `update` · `agent` · `skill` · `stats`
 
 ```bash
 npm run build      # tsc → dist/
-npm test           # Jest, 5 suites, ~41 tests
+npm test           # Jest, 5 suites, ~45 tests
 npm run dev        # tsc --watch
 ```
 
-Always run `npm test` after any change. All 41 tests must pass before committing.
+Always run `npm test` after any change. All tests must pass before committing.
 
 ## Project layout
 

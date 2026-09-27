@@ -57,10 +57,11 @@ Supported agents:
 
 | Flag | Binary invoked |
 |---|---|
-| `bob` | `bob shell -p "…"` |
-| `claude` | `claude -p "…"` |
-| `opencode` | `opencode -p "…"` |
-| `codex` | `codex exec "…"` |
+| `bob` | `bob run "…"` |
+| `claude` | `claude -p "…" --permission-mode acceptEdits` |
+| `opencode` | `opencode run "…" --auto` |
+| `codex` | `codex exec "…" --sandbox workspace-write` |
+| `agy` | `agy -p "…" --dangerously-skip-permissions` |
 | `antigravity` | `$ANTIGRAVITY_CMD "…"` |
 
 ### `skill`

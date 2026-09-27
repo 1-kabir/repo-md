@@ -6,12 +6,39 @@
  * any insight the model can derive from the code.
  *
  * Supported agents:
- *   bob         — IBM Bob Shell    (bob shell -p "<prompt>")
- *   claude      — Anthropic CLI    (claude -p "<prompt>")
- *   opencode    — OpenCode CLI     (opencode run "<prompt>")
- *   codex       — OpenAI Codex     (codex exec "<prompt>")
- *   agy         — Antigravity CLI  (agy --print "<prompt>")
+ *   bob         — IBM Bob Shell    (bob run "<prompt>")
+ *   claude      — Anthropic CLI    (claude -p "<prompt>" --permission-mode acceptEdits)
+ *   opencode    — OpenCode CLI     (opencode run "<prompt>" --auto)
+ *   codex       — OpenAI Codex     (codex exec "<prompt>" --sandbox workspace-write)
+ *   agy         — Antigravity CLI  (agy -p "<prompt>" --dangerously-skip-permissions)
  *   antigravity — custom binary    ($ANTIGRAVITY_CMD env var)
+ *
+ * Headless invocation syntax verified against each CLI's official docs:
+ *   - Bob Shell: non-interactive sessions use the `bob run [options] [prompt...]`
+ *     subcommand (not `bob shell`). Tool calls are pre-approved automatically
+ *     in this mode, so no extra permission flag is needed.
+ *     https://bob.ibm.com/docs/shell/getting-started/start-bobshell-non-interactive
+ *   - Claude Code: `-p`/`--print` runs one prompt and exits. Without an
+ *     explicit permission mode, a tool call that needs approval has no one to
+ *     answer it in a headless run. `--permission-mode acceptEdits` auto-
+ *     approves file edits (the only tool class this prompt needs) without
+ *     granting blanket command execution.
+ *   - OpenCode: `opencode run [message..]` is the non-interactive mode. The
+ *     `--auto` flag ("auto-approve permissions that are not explicitly
+ *     denied") is required for unattended runs that edit REPO.md — without
+ *     it a permission request has no one to answer it.
+ *     https://opencode.ai/docs/cli/
+ *   - Codex: `codex exec [PROMPT]` is the non-interactive mode, but it
+ *     defaults to a READ-ONLY sandbox — the enrichment pass could not write
+ *     REPO.md. `--sandbox workspace-write` grants edit access to the working
+ *     tree. (`--full-auto` also implies workspace-write but is deprecated
+ *     and prints a warning.)
+ *     https://developers.openai.com/codex/cli/reference
+ *   - Antigravity (agy): `-p`/`--print`/`--prompt` runs one prompt and exits.
+ *     The default `request-review` permission mode blocks on the same kind of
+ *     unanswerable approval prompt, so `--dangerously-skip-permissions` is
+ *     required for an unattended run.
+ *     https://antigravity.google/docs/cli/headless/
  */
 
 import { execSync, spawnSync } from "node:child_process";
@@ -57,17 +84,19 @@ Analyze only. Enrich REPO.md. Do not touch any other file.`;
 function buildCommand(agent: AgentName, prompt: string): { cmd: string; args: string[] } | null {
   switch (agent) {
     case "bob":
-      return { cmd: "bob", args: ["shell", "-p", prompt] };
+      // Non-interactive: `bob run [options] [prompt...]`.
+      return { cmd: "bob", args: ["run", prompt] };
     case "claude":
-      return { cmd: "claude", args: ["-p", prompt] };
+      return { cmd: "claude", args: ["-p", prompt, "--permission-mode", "acceptEdits"] };
     case "opencode":
-      // opencode headless mode: `opencode run "<message>"`
-      return { cmd: "opencode", args: ["run", prompt] };
+      // opencode headless mode: `opencode run "<message>" --auto`
+      return { cmd: "opencode", args: ["run", prompt, "--auto"] };
     case "codex":
-      return { cmd: "codex", args: ["exec", prompt] };
+      // exec defaults to a read-only sandbox; the enrichment pass must edit REPO.md.
+      return { cmd: "codex", args: ["exec", prompt, "--sandbox", "workspace-write"] };
     case "agy":
-      // Antigravity (agy) headless: `agy --print "<prompt>"`
-      return { cmd: "agy", args: ["--print", prompt] };
+      // Antigravity (agy) headless: `agy -p "<prompt>" --dangerously-skip-permissions`
+      return { cmd: "agy", args: ["-p", prompt, "--dangerously-skip-permissions"] };
     case "antigravity": {
       const custom = process.env["ANTIGRAVITY_CMD"];
       if (!custom) {

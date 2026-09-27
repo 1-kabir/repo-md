@@ -52,10 +52,10 @@ const DEFAULT_BUDGET = 1800;
 
 /** Entry-point file names we highlight in the Entry Points section */
 const ENTRY_POINT_NAMES = new Set([
-  "index.ts", "index.js", "index.mjs",
-  "main.ts", "main.js", "main.py", "main.go", "main.rs",
-  "app.ts", "app.js", "app.py",
-  "server.ts", "server.js",
+  "index.ts", "index.js", "index.mjs", "index.tsx", "index.jsx",
+  "main.ts", "main.js", "main.py", "main.go", "main.rs", "main.tsx", "main.jsx",
+  "app.ts", "app.js", "app.py", "app.tsx",
+  "server.ts", "server.js", "serve.ts", "serve.js",
   "cli.ts", "cli.js",
   "cmd/main.go",
 ]);
@@ -180,7 +180,7 @@ export function buildSections(opts: Omit<WriterOptions, "repoName">): SectionBod
     ? "\n## Stack\n" + stackLines.join("\n") + "\n"
     : "";
 
-  const entryLines = buildEntryPointsSection(nodes);
+  const entryLines = buildEntryPointsSection(root, nodes);
   const entryPoints = entryLines.length > 0
     ? "\n## Entry Points\n" + entryLines.join("\n") + "\n"
     : "";
@@ -222,7 +222,7 @@ export function writeRepoMd(opts: WriterOptions): string {
   }
 
   // ── Entry Points section ───────────────────────────────────────────────────
-  const entryLines = buildEntryPointsSection(nodes);
+  const entryLines = buildEntryPointsSection(root, nodes);
   if (entryLines.length > 0) {
     const epBody = "## Entry Points\n" + entryLines.join("\n");
     parts.push(
@@ -370,18 +370,104 @@ function collectStackRows(
 
 // ── Entry Points section ──────────────────────────────────────────────────────
 
-function buildEntryPointsSection(nodes: FileNode[]): string[] {
-  const found: string[] = [];
-  collectEntryPoints(nodes, found);
+/**
+ * Pull a source-file-looking path out of an npm script string, e.g.
+ * "node --loader tsx bin/serve.ts" → "bin/serve.ts". This lets us prefer the
+ * runtime entry a package actually declares (via `scripts.start`/`dev`/`serve`
+ * or `bin`) over a filename guess — important when a package's `main` field
+ * points at a type-only barrel instead of the real executable.
+ */
+function extractScriptEntryPath(script: string): string | null {
+  const match = script.match(/([./]?[\w./-]+\.(?:ts|tsx|js|jsx|mjs|py|go|rs))\b/);
+  return match ? match[1].replace(/^\.\//, "") : null;
+}
+
+/** Resolve declared runtime entry points for a directory's package.json, if any. */
+function getPackageEntryPoints(root: string, dirRelPath: string): string[] {
+  const absDir = path.join(root, dirRelPath);
+  let pkg: Record<string, unknown>;
+  try {
+    pkg = JSON.parse(fs.readFileSync(path.join(absDir, "package.json"), "utf8"));
+  } catch {
+    return [];
+  }
+
+  const candidates: string[] = [];
+  const scripts = (pkg.scripts ?? {}) as Record<string, unknown>;
+  for (const key of ["start", "dev", "serve"]) {
+    const script = scripts[key];
+    if (typeof script === "string") {
+      const entry = extractScriptEntryPath(script);
+      if (entry) candidates.push(entry);
+    }
+  }
+
+  const bin = pkg.bin;
+  if (typeof bin === "string") {
+    candidates.push(bin.replace(/^\.\//, ""));
+  } else if (bin && typeof bin === "object") {
+    for (const v of Object.values(bin as Record<string, unknown>)) {
+      if (typeof v === "string") candidates.push(v.replace(/^\.\//, ""));
+    }
+  }
+
+  const resolved = new Set<string>();
+  for (const c of candidates) {
+    const absCandidate = path.join(absDir, c);
+    if (fs.existsSync(absCandidate)) {
+      resolved.add(path.relative(root, absCandidate).replace(/\\/g, "/"));
+    }
+  }
+  return [...resolved];
+}
+
+function buildEntryPointsSection(root: string, nodes: FileNode[]): string[] {
+  const packageDirs = new Map<string, string[]>();
+  collectPackageEntryPoints(root, nodes, packageDirs);
+
+  const skipDirs = new Set(packageDirs.keys());
+  const packageDerived = [...packageDirs.values()].flat();
+
+  const filenameMatches: string[] = [];
+  collectEntryPoints(nodes, filenameMatches, skipDirs);
+
+  const found = [...new Set([...packageDerived, ...filenameMatches])];
   return found.map((p) => `- \`${p}\``);
 }
 
-function collectEntryPoints(nodes: FileNode[], found: string[]): void {
+function collectPackageEntryPoints(
+  root: string,
+  nodes: FileNode[],
+  out: Map<string, string[]>
+): void {
+  for (const node of nodes) {
+    if (!node.isDir) continue;
+    const hasPkgJson = (node.children ?? []).some(
+      (c) => !c.isDir && path.basename(c.relPath) === "package.json"
+    );
+    if (hasPkgJson) {
+      const entries = getPackageEntryPoints(root, node.relPath);
+      if (entries.length > 0) out.set(node.relPath, entries);
+    }
+    if (node.children) collectPackageEntryPoints(root, node.children, out);
+  }
+}
+
+function collectEntryPoints(
+  nodes: FileNode[],
+  found: string[],
+  skipDirs: Set<string>,
+  dirRelPath = "."
+): void {
   for (const node of nodes) {
     if (node.isDir) {
-      if (node.children) collectEntryPoints(node.children, found);
+      if (node.children) collectEntryPoints(node.children, found, skipDirs, node.relPath);
     } else {
       const name = path.basename(node.relPath);
+      // Never treat type-only files, or anything filed under a types/ dir, as an entry point.
+      if (name.endsWith(".d.ts") || path.basename(dirRelPath) === "types") continue;
+      // A directory with its own declared runtime entry (scripts/bin) wins over guesses.
+      if (skipDirs.has(dirRelPath)) continue;
       if (ENTRY_POINT_NAMES.has(name)) {
         found.push(node.relPath);
       }
